@@ -1,0 +1,13 @@
+# Commands to start the PDPL Compliance Frontend
+
+1. Navigate to the frontend directory:
+   cd frontend
+
+2. Install the required dependencies:
+   npm install
+
+3. Start the Next.js development server:
+   npm run dev
+
+The frontend will start and be available at http://localhost:3000
+Ensure your backend is also running concurrently to be able to use the full functionality.
