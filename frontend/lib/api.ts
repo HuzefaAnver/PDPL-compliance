@@ -1,50 +1,60 @@
 const BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
 
-export interface CompanyCreate {
-  name: string
+// ── Types ─────────────────────────────────────────────────────
+
+export interface AssessmentCreate {
+  // Section A
+  company_name: string
+  user_name: string
+  email: string
   industry: string
+  // Section B
+  data_volume: string
   data_types: string[]
-  tools_used: string[]
-  third_party_vendors: string[]
-  processing_activities: string
-  employee_count: string
-  country: string
+  stores_regularly: string
+  // Section C
+  knows_data_location: string
+  shares_third_party: string
+  vendor_list: string
+  privacy_policy: string
+  internal_rules: string
+  breach_plan: string
+  user_rights: string
 }
 
-export interface Company extends CompanyCreate {
+export interface AssessmentResponse {
   id: number
+  score: number
+  risk_level: 'RED' | 'AMBER' | 'GREEN'
+  gaps: string[]
   created_at: string
 }
 
-export interface ComplianceScore {
-  company_id: number
-  overall_score: number
-  risk_level: 'Low' | 'Medium' | 'High'
-  gaps: Gap[]
-  recommendations: string[]
+export interface SignupRequest {
+  email: string
+  password: string
+  assessment_id: number
 }
 
-export interface Gap {
-  severity: 'high' | 'medium' | 'low'
-  code: string
-  title: string
-  description: string
-  article: string
+export interface SignupResponse {
+  user_id: number
+  email: string
+  assessment_id: number
 }
 
-export interface GeneratedDocument {
-  id: number
-  company_id: number
-  doc_type: string
-  content: string
-  created_at: string
+export interface ResultsResponse {
+  user_id: number
+  email: string
+  company_name: string
+  industry: string
+  score: number
+  risk_level: 'RED' | 'AMBER' | 'GREEN'
+  gaps: string[]
+  ai_summary: string | null
+  assessment_id: number
 }
 
-export interface Dashboard {
-  company: Company
-  compliance_score: ComplianceScore | null
-  documents: GeneratedDocument[]
-}
+// ── Fetch helper ─────────────────────────────────────────────
 
 async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
   const res = await fetch(`${BASE}${path}`, {
@@ -58,28 +68,27 @@ async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
   return res.json()
 }
 
+// ── API calls ────────────────────────────────────────────────
+
 export const api = {
-  createCompany: (data: CompanyCreate) =>
-    apiFetch<Company>('/companies/', { method: 'POST', body: JSON.stringify(data) }),
-
-  getDashboard: (id: number) =>
-    apiFetch<Dashboard>(`/companies/${id}/dashboard`),
-
-  generateAll: (company_id: number) =>
-    apiFetch<any>('/generate/all', { method: 'POST', body: JSON.stringify({ company_id }) }),
-
-  generateDoc: (type: string, company_id: number) =>
-    apiFetch<GeneratedDocument>(`/generate/${type}`, {
+  submitAssessment: (data: AssessmentCreate) =>
+    apiFetch<AssessmentResponse>('/submit-assessment/', {
       method: 'POST',
-      body: JSON.stringify({ company_id }),
+      body: JSON.stringify(data),
     }),
 
-  chat: (company_id: number, message: string) =>
-    apiFetch<{ answer: string }>('/chat/', {
+  signup: (data: SignupRequest) =>
+    apiFetch<SignupResponse>('/signup/', {
       method: 'POST',
-      body: JSON.stringify({ company_id, message }),
+      body: JSON.stringify(data),
     }),
 
-  downloadUrl: (company_id: number, doc_type: string) =>
-    `${BASE}/generate/${company_id}/download/${doc_type}`,
+  getResults: (userId: number) =>
+    apiFetch<ResultsResponse>(`/results/${userId}`),
+
+  generateSummary: (userId: number) =>
+    apiFetch<{ summary: string }>('/generate-summary', {
+      method: 'POST',
+      body: JSON.stringify({ user_id: userId }),
+    }),
 }

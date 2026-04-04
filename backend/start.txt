@@ -1,23 +1,39 @@
-# Commands to start the PDPL Compliance Backend
+# PDPL Compliance Assessment Platform — Backend Setup
 
-1. Navigate to the backend directory:
-   cd backend
+## Prerequisites
+- Python 3.10+
+- pip
 
-2. Create a virtual environment:
-   python -m venv venv
+## First-time setup
 
-3. Activate the virtual environment:
-   # On Windows PowerShell/CMD:
-   venv\Scripts\activate
-   
-   # On Linux/macOS:
-   source venv/bin/activate
+1. Create and activate virtual environment:
+   Windows:
+     python -m venv venv
+     venv\Scripts\activate
 
-4. Install the required dependencies:
-   pip install -r requirements.txt
+2. Install dependencies:
+     pip install -r requirements.txt
 
-5. Start the FastAPI server:
-   uvicorn main:app --reload
+3. Copy env file:
+     copy .env.example .env
+   Edit .env and add your OPENAI_API_KEY (or leave blank for demo/mock mode)
 
-The API will be available at http://127.0.0.1:8000
-API Documentation will be available at http://127.0.0.1:8000/docs
+4. (Optional) Delete old DB to start fresh with new schema:
+     del pdpl_demo.db
+
+## Running the backend
+
+   uvicorn main:app --reload --port 8000
+
+   API docs: http://localhost:8000/docs
+
+## Key Endpoints (MVP v2)
+
+   POST /submit-assessment   — Submit assessment answers, get RAG score
+   POST /signup              — Create account to unlock results
+   GET  /results/{user_id}   — Fetch full compliance results
+   POST /generate-summary    — Generate AI compliance summary
+
+## Mock AI Mode
+Leave OPENAI_API_KEY blank in .env to use built-in high-quality mock responses.
+Set OPENAI_API_KEY=sk-your-key to use real OpenAI gpt-4o-mini.
