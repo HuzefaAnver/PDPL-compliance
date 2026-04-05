@@ -10,10 +10,10 @@ const TRUST_POINTS = [
 ]
 
 const HOW_IT_WORKS = [
-  { n: '01', title: 'Answer 10 questions', sub: 'About your data, policies & practices' },
-  { n: '02', title: 'Get your risk score', sub: 'Red / Amber / Green instantly' },
-  { n: '03', title: 'Create free account', sub: 'To unlock full results & AI summary' },
-  { n: '04', title: 'Get your action plan', sub: 'Specific next steps to fix gaps' },
+  { n: '01', title: 'Complete Assessment', sub: 'Answer 10 questions about your practices' },
+  { n: '02', title: 'Create Free Account', sub: 'Securely link your results to your profile' },
+  { n: '03', title: 'View Risk Report', sub: 'Get your RAG score and AI summary' },
+  { n: '04', title: 'Start Improving', sub: 'Follow your personalized action plan' },
 ]
 
 const TESTIMONIALS = [
@@ -62,7 +62,7 @@ export default function LandingPage() {
           </h1>
 
           <p className="text-slate-400 text-lg max-w-2xl mx-auto mb-10 leading-relaxed">
-            Answer 10 simple questions and instantly discover your compliance risk rating — 
+            Answer 10 simple questions and instantly discover your compliance risk rating —
             Red, Amber, or Green — plus an AI-generated action plan tailored to your business.
           </p>
 
@@ -108,11 +108,10 @@ export default function LandingPage() {
             ].map(({ color, label, emoji, desc }) => (
               <div
                 key={color}
-                className={`rounded-xl p-4 text-center border ${
-                  color === 'amber'
+                className={`rounded-xl p-4 text-center border ${color === 'amber'
                     ? 'border-amber-500/40 bg-amber-500/10 scale-105'
                     : 'border-slate-700/40 bg-slate-800/30 opacity-60'
-                }`}
+                  }`}
               >
                 <div className="text-3xl mb-2">{emoji}</div>
                 <p className={`font-bold text-sm mb-1 ${color === 'amber' ? 'text-amber-400' : 'text-slate-300'}`}>{label}</p>

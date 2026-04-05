@@ -52,11 +52,10 @@ function RadioCard({ options, value, onChange }: { options: RadioOption[]; value
           key={opt.value}
           type="button"
           onClick={() => onChange(opt.value)}
-          className={`flex items-center justify-between w-full px-4 py-3.5 rounded-xl border text-left transition-all ${
-            value === opt.value
+          className={`flex items-center justify-between w-full px-4 py-3.5 rounded-xl border text-left transition-all ${value === opt.value
               ? 'border-brand-500 bg-brand-500/10 text-white'
               : 'border-slate-700 bg-slate-900/60 text-slate-300 hover:bg-slate-800/60'
-          }`}
+            }`}
         >
           <div>
             <span className="font-medium text-sm">{opt.label}</span>
@@ -86,7 +85,7 @@ export default function AssessmentPage() {
   const searchParams = useSearchParams()
   const isDemo = searchParams.get('demo') === 'true'
 
-  const [step, setStep] = useState(0) // 0=SectionA, 1=SectionB, 2=SectionC
+  const [step, setStep] = useState(0) // 0=Risk Profile, 1=Compliance Maturity, 2=Basic Info
   const [loading, setLoading] = useState(false)
 
   const [formData, setFormData] = useState<AssessmentCreate>({
@@ -123,14 +122,14 @@ export default function AssessmentPage() {
   }
 
   // Validation per step
-  const canProceedA = formData.company_name.trim().length >= 2 && formData.user_name.trim().length >= 2
-    && formData.email.trim().includes('@') && formData.industry
+  const canProceedRisk = formData.data_volume && formData.data_types.length > 0 && formData.stores_regularly
 
-  const canProceedB = formData.data_volume && formData.data_types.length > 0 && formData.stores_regularly
-
-  const canSubmit = formData.knows_data_location && formData.shares_third_party
+  const canProceedMaturity = formData.knows_data_location && formData.shares_third_party
     && formData.vendor_list && formData.privacy_policy && formData.internal_rules
     && formData.breach_plan && formData.user_rights
+
+  const canSubmit = canProceedRisk && canProceedMaturity && formData.company_name.trim().length >= 2
+    && formData.user_name.trim().length >= 2 && formData.email.trim().includes('@') && formData.industry
 
   const handleSubmit = async () => {
     if (!canSubmit) return
@@ -138,12 +137,12 @@ export default function AssessmentPage() {
     try {
       const result = await api.submitAssessment(formData)
       // Store assessment ID in session for signup gate
-      sessionStorage.setItem('assessment_id', String(result.id))
+      sessionStorage.setItem('assessment_id', result.assessment_id)
       sessionStorage.setItem('assessment_email', formData.email)
       router.push('/signup')
     } catch (err) {
       console.error(err)
-      alert('Failed to submit. Please make sure the backend is running.')
+      alert('Failed to submit. Please check your connection.')
       setLoading(false)
     }
   }
@@ -154,12 +153,12 @@ export default function AssessmentPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-6 text-center">
-        <div className="w-16 h-16 rounded-2xl gradient-brand flex items-center justify-center mb-8 animate-pulse">
+        <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center mb-8 animate-pulse">
           <Shield className="w-8 h-8 text-white" />
         </div>
         <Loader2 className="w-10 h-10 text-brand-500 animate-spin mb-4" />
-        <h1 className="text-2xl font-bold mb-2 text-white">Calculating Your Risk Score...</h1>
-        <p className="text-slate-400 max-w-sm">Analysing your answers against PDPL requirements and computing your RAG compliance rating.</p>
+        <h1 className="text-2xl font-bold mb-2 text-white">Generating Your AI Compliance Report...</h1>
+        <p className="text-slate-400 max-w-sm">Analysing your answers against PDPL requirements to generate a custom roadmap.</p>
       </div>
     )
   }
@@ -171,7 +170,7 @@ export default function AssessmentPage() {
         <div className="max-w-xl mx-auto">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded gradient-brand flex items-center justify-center">
+              <div className="w-6 h-6 rounded bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center">
                 <Shield className="w-3.5 h-3.5 text-white" />
               </div>
               <span className="text-sm font-semibold text-slate-200">PDPL Assessment</span>
@@ -181,7 +180,7 @@ export default function AssessmentPage() {
           {/* Progress bar */}
           <div className="h-1.5 bg-slate-800 rounded-full overflow-hidden">
             <div
-              className="h-full gradient-brand rounded-full transition-all duration-500"
+              className="h-full bg-gradient-to-r from-brand-500 to-brand-400 rounded-full transition-all duration-500"
               style={{ width: `${progress}%` }}
             />
           </div>
@@ -192,13 +191,200 @@ export default function AssessmentPage() {
       <div className="flex-1 flex items-start justify-center p-6 pt-10">
         <div className="w-full max-w-xl">
 
-          {/* ── Step 0: Section A – Basic Info ── */}
+          {/* ── Step 0: Risk & Data Profile ── */}
           {step === 0 && (
+            <div className="animate-in fade-in slide-in-from-bottom-4 space-y-7">
+              <SectionHeader
+                step="Step 1"
+                title="Your data & risk profile"
+                subtitle="Help us understand the scale and type of data you handle."
+              />
+
+              <div>
+                <p className="text-sm font-semibold text-slate-200 mb-3">Q1. How many individuals' data do you handle?</p>
+                <RadioCard
+                  value={formData.data_volume}
+                  onChange={v => set('data_volume', v)}
+                  options={[
+                    { value: '<100', label: 'Fewer than 100 people' },
+                    { value: '100-10000', label: '100 – 10,000 people' },
+                    { value: '>10000', label: 'More than 10,000 people' },
+                  ]}
+                />
+              </div>
+
+              <div>
+                <p className="text-sm font-semibold text-slate-200 mb-3">Q2. What types of data do you collect? <span className="font-normal text-slate-500">(select all that apply)</span></p>
+                <div className="grid gap-2.5">
+                  {DATA_TYPE_OPTIONS.map(opt => (
+                    <button
+                      key={opt.id}
+                      type="button"
+                      onClick={() => toggleDataType(opt.id)}
+                      className={`flex items-center justify-between w-full px-4 py-3.5 rounded-xl border text-left transition-all ${formData.data_types.includes(opt.id)
+                          ? 'border-brand-500 bg-brand-500/10 text-white'
+                          : 'border-slate-700 bg-slate-900/60 text-slate-300 hover:bg-slate-800/60'
+                        }`}
+                    >
+                      <div>
+                        <span className="font-medium text-sm">{opt.label}</span>
+                        <p className="text-xs text-slate-500 mt-0.5">{opt.desc}</p>
+                      </div>
+                      {formData.data_types.includes(opt.id) && <CheckCircle className="w-4 h-4 text-brand-400 shrink-0 ml-2" />}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <p className="text-sm font-semibold text-slate-200 mb-3">Q3. Do you store or process personal data on a regular basis?</p>
+                <RadioCard
+                  value={formData.stores_regularly}
+                  onChange={v => set('stores_regularly', v)}
+                  options={[
+                    { value: 'yes', label: 'Yes', hint: 'We regularly store/process data' },
+                    { value: 'sometimes', label: 'Sometimes', hint: 'Occasional data processing' },
+                    { value: 'no', label: 'No', hint: 'We rarely handle personal data' },
+                  ]}
+                />
+              </div>
+
+              <button
+                id="step-risk-next"
+                disabled={!canProceedRisk}
+                onClick={() => setStep(1)}
+                className="w-full bg-brand-600 hover:bg-brand-500 disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold py-3.5 rounded-xl flex items-center justify-center gap-2 mt-2 transition-colors"
+              >
+                Continue <ArrowRight className="w-4 h-4" />
+              </button>
+            </div>
+          )}
+
+          {/* ── Step 1: Compliance Maturity ── */}
+          {step === 1 && (
+            <div className="animate-in fade-in slide-in-from-bottom-4 space-y-7">
+              <SectionHeader
+                step="Step 2"
+                title="Compliance maturity"
+                subtitle="Quick questions about your current privacy practices."
+              />
+
+              <div className="space-y-6">
+                <div>
+                  <p className="text-sm font-semibold text-slate-200 mb-3">Q4. Do you know what data you collect and where it is stored?</p>
+                  <RadioCard
+                    value={formData.knows_data_location}
+                    onChange={v => set('knows_data_location', v)}
+                    options={[
+                      { value: 'yes', label: 'Yes — fully documented' },
+                      { value: 'partially', label: 'Partially — some idea, not documented' },
+                      { value: 'no', label: 'No — not sure' },
+                    ]}
+                  />
+                </div>
+
+                <div>
+                  <p className="text-sm font-semibold text-slate-200 mb-3">Q5. Do you share data with third-party tools or vendors?</p>
+                  <RadioCard
+                    value={formData.shares_third_party}
+                    onChange={v => set('shares_third_party', v)}
+                    options={[
+                      { value: 'documented', label: 'Yes — and it\'s documented with agreements' },
+                      { value: 'not_documented', label: 'Yes — but without formal agreements' },
+                      { value: 'not_sure', label: 'Not sure / No' },
+                    ]}
+                  />
+                </div>
+
+                <div>
+                  <p className="text-sm font-semibold text-slate-200 mb-3">Q6. Do you maintain a vendor and tools list?</p>
+                  <RadioCard
+                    value={formData.vendor_list}
+                    onChange={v => set('vendor_list', v)}
+                    options={[
+                      { value: 'yes', label: 'Yes — up to date' },
+                      { value: 'partial', label: 'Partial — some vendors listed' },
+                      { value: 'no', label: 'No — not tracked' },
+                    ]}
+                  />
+                </div>
+
+                <div>
+                  <p className="text-sm font-semibold text-slate-200 mb-3">Q7. Do you have a privacy policy?</p>
+                  <RadioCard
+                    value={formData.privacy_policy}
+                    onChange={v => set('privacy_policy', v)}
+                    options={[
+                      { value: 'yes', label: 'Yes — PDPL-compliant policy published' },
+                      { value: 'basic', label: 'Basic — simple/generic policy exists' },
+                      { value: 'no', label: 'No — none exists' },
+                    ]}
+                  />
+                </div>
+
+                <div>
+                  <p className="text-sm font-semibold text-slate-200 mb-3">Q8. Do you have internal data handling rules?</p>
+                  <RadioCard
+                    value={formData.internal_rules}
+                    onChange={v => set('internal_rules', v)}
+                    options={[
+                      { value: 'yes', label: 'Yes — written policies in place' },
+                      { value: 'informal', label: 'Informal — team knows but nothing written' },
+                      { value: 'no', label: 'No — no rules' },
+                    ]}
+                  />
+                </div>
+
+                <div>
+                  <p className="text-sm font-semibold text-slate-200 mb-3">Q9. Do you have a data breach response plan?</p>
+                  <RadioCard
+                    value={formData.breach_plan}
+                    onChange={v => set('breach_plan', v)}
+                    options={[
+                      { value: 'yes', label: 'Yes — documented with 72-hr SDAIA procedure' },
+                      { value: 'basic', label: 'Basic — informal plan exists' },
+                      { value: 'no', label: 'No — nothing in place' },
+                    ]}
+                  />
+                </div>
+
+                <div>
+                  <p className="text-sm font-semibold text-slate-200 mb-3">Q10. Can individuals request access or deletion of their data?</p>
+                  <RadioCard
+                    value={formData.user_rights}
+                    onChange={v => set('user_rights', v)}
+                    options={[
+                      { value: 'yes', label: 'Yes — formal process exists' },
+                      { value: 'informal', label: 'Informal — handled case by case' },
+                      { value: 'no', label: 'No — no process' },
+                    ]}
+                  />
+                </div>
+              </div>
+
+              <div className="flex gap-3">
+                <button onClick={() => setStep(0)} className="flex-1 bg-slate-800 hover:bg-slate-700 py-3.5 rounded-xl transition-colors flex items-center justify-center gap-1 text-sm">
+                  <ArrowLeft className="w-4 h-4" /> Back
+                </button>
+                <button
+                  id="step-maturity-next"
+                  disabled={!canProceedMaturity}
+                  onClick={() => setStep(2)}
+                  className="flex-[2] bg-brand-600 hover:bg-brand-500 disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold py-3.5 rounded-xl transition-colors flex items-center justify-center gap-2"
+                >
+                  Continue <ArrowRight className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* ── Step 2: Basic Info ── */}
+          {step === 2 && (
             <div className="animate-in fade-in slide-in-from-bottom-4 space-y-5">
               <SectionHeader
-                step="Section A"
-                title="Tell us about your company"
-                subtitle="Basic info to tailor your PDPL assessment."
+                step="Step 3"
+                title="Final Details"
+                subtitle="Where should we send your results?"
               />
               <div>
                 <label className="block text-sm font-medium mb-1.5 text-slate-300">Company Name</label>
@@ -245,191 +431,6 @@ export default function AssessmentPage() {
                   {INDUSTRIES.map(i => <option key={i} value={i}>{i}</option>)}
                 </select>
               </div>
-              <button
-                id="step-a-next"
-                disabled={!canProceedA}
-                onClick={() => setStep(1)}
-                className="w-full bg-brand-600 hover:bg-brand-500 disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold py-3.5 rounded-xl flex items-center justify-center gap-2 mt-2 transition-colors"
-              >
-                Continue <ArrowRight className="w-4 h-4" />
-              </button>
-            </div>
-          )}
-
-          {/* ── Step 1: Section B – Risk & Data Profile ── */}
-          {step === 1 && (
-            <div className="animate-in fade-in slide-in-from-bottom-4 space-y-7">
-              <SectionHeader
-                step="Section B"
-                title="Your data & risk profile"
-                subtitle="Help us understand the scale and type of data you handle."
-              />
-
-              <div>
-                <p className="text-sm font-semibold text-slate-200 mb-3">Q1. How many individuals' data do you handle?</p>
-                <RadioCard
-                  value={formData.data_volume}
-                  onChange={v => set('data_volume', v)}
-                  options={[
-                    { value: '<100', label: 'Fewer than 100 people' },
-                    { value: '100-10000', label: '100 – 10,000 people' },
-                    { value: '>10000', label: 'More than 10,000 people' },
-                  ]}
-                />
-              </div>
-
-              <div>
-                <p className="text-sm font-semibold text-slate-200 mb-3">Q2. What types of data do you collect? <span className="font-normal text-slate-500">(select all that apply)</span></p>
-                <div className="grid gap-2.5">
-                  {DATA_TYPE_OPTIONS.map(opt => (
-                    <button
-                      key={opt.id}
-                      type="button"
-                      onClick={() => toggleDataType(opt.id)}
-                      className={`flex items-center justify-between w-full px-4 py-3.5 rounded-xl border text-left transition-all ${
-                        formData.data_types.includes(opt.id)
-                          ? 'border-brand-500 bg-brand-500/10 text-white'
-                          : 'border-slate-700 bg-slate-900/60 text-slate-300 hover:bg-slate-800/60'
-                      }`}
-                    >
-                      <div>
-                        <span className="font-medium text-sm">{opt.label}</span>
-                        <p className="text-xs text-slate-500 mt-0.5">{opt.desc}</p>
-                      </div>
-                      {formData.data_types.includes(opt.id) && <CheckCircle className="w-4 h-4 text-brand-400 shrink-0 ml-2" />}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div>
-                <p className="text-sm font-semibold text-slate-200 mb-3">Q3. Do you store or process personal data on a regular basis?</p>
-                <RadioCard
-                  value={formData.stores_regularly}
-                  onChange={v => set('stores_regularly', v)}
-                  options={[
-                    { value: 'yes', label: 'Yes', hint: 'We regularly store/process data' },
-                    { value: 'sometimes', label: 'Sometimes', hint: 'Occasional data processing' },
-                    { value: 'no', label: 'No', hint: 'We rarely handle personal data' },
-                  ]}
-                />
-              </div>
-
-              <div className="flex gap-3">
-                <button onClick={() => setStep(0)} className="flex-1 bg-slate-800 hover:bg-slate-700 py-3.5 rounded-xl transition-colors flex items-center justify-center gap-1 text-sm">
-                  <ArrowLeft className="w-4 h-4" /> Back
-                </button>
-                <button
-                  id="step-b-next"
-                  disabled={!canProceedB}
-                  onClick={() => setStep(2)}
-                  className="flex-[2] bg-brand-600 hover:bg-brand-500 disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold py-3.5 rounded-xl transition-colors flex items-center justify-center gap-2"
-                >
-                  Continue <ArrowRight className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* ── Step 2: Section C – Compliance Maturity ── */}
-          {step === 2 && (
-            <div className="animate-in fade-in slide-in-from-bottom-4 space-y-7">
-              <SectionHeader
-                step="Section C"
-                title="Compliance maturity"
-                subtitle="7 quick questions about your current privacy practices."
-              />
-
-              <div>
-                <p className="text-sm font-semibold text-slate-200 mb-3">Q4. Do you know what data you collect and where it is stored?</p>
-                <RadioCard
-                  value={formData.knows_data_location}
-                  onChange={v => set('knows_data_location', v)}
-                  options={[
-                    { value: 'yes', label: 'Yes — fully documented' },
-                    { value: 'partially', label: 'Partially — some idea, not documented' },
-                    { value: 'no', label: 'No — not sure' },
-                  ]}
-                />
-              </div>
-
-              <div>
-                <p className="text-sm font-semibold text-slate-200 mb-3">Q5. Do you share data with third-party tools or vendors?</p>
-                <RadioCard
-                  value={formData.shares_third_party}
-                  onChange={v => set('shares_third_party', v)}
-                  options={[
-                    { value: 'documented', label: 'Yes — and it\'s documented with agreements' },
-                    { value: 'not_documented', label: 'Yes — but without formal agreements' },
-                    { value: 'not_sure', label: 'Not sure / No' },
-                  ]}
-                />
-              </div>
-
-              <div>
-                <p className="text-sm font-semibold text-slate-200 mb-3">Q6. Do you maintain a vendor and tools list?</p>
-                <RadioCard
-                  value={formData.vendor_list}
-                  onChange={v => set('vendor_list', v)}
-                  options={[
-                    { value: 'yes', label: 'Yes — up to date' },
-                    { value: 'partial', label: 'Partial — some vendors listed' },
-                    { value: 'no', label: 'No — not tracked' },
-                  ]}
-                />
-              </div>
-
-              <div>
-                <p className="text-sm font-semibold text-slate-200 mb-3">Q7. Do you have a privacy policy?</p>
-                <RadioCard
-                  value={formData.privacy_policy}
-                  onChange={v => set('privacy_policy', v)}
-                  options={[
-                    { value: 'yes', label: 'Yes — PDPL-compliant policy published' },
-                    { value: 'basic', label: 'Basic — simple/generic policy exists' },
-                    { value: 'no', label: 'No — none exists' },
-                  ]}
-                />
-              </div>
-
-              <div>
-                <p className="text-sm font-semibold text-slate-200 mb-3">Q8. Do you have internal data handling rules?</p>
-                <RadioCard
-                  value={formData.internal_rules}
-                  onChange={v => set('internal_rules', v)}
-                  options={[
-                    { value: 'yes', label: 'Yes — written policies in place' },
-                    { value: 'informal', label: 'Informal — team knows but nothing written' },
-                    { value: 'no', label: 'No — no rules' },
-                  ]}
-                />
-              </div>
-
-              <div>
-                <p className="text-sm font-semibold text-slate-200 mb-3">Q9. Do you have a data breach response plan?</p>
-                <RadioCard
-                  value={formData.breach_plan}
-                  onChange={v => set('breach_plan', v)}
-                  options={[
-                    { value: 'yes', label: 'Yes — documented with 72-hr SDAIA procedure' },
-                    { value: 'basic', label: 'Basic — informal plan exists' },
-                    { value: 'no', label: 'No — nothing in place' },
-                  ]}
-                />
-              </div>
-
-              <div>
-                <p className="text-sm font-semibold text-slate-200 mb-3">Q10. Can individuals request access or deletion of their data?</p>
-                <RadioCard
-                  value={formData.user_rights}
-                  onChange={v => set('user_rights', v)}
-                  options={[
-                    { value: 'yes', label: 'Yes — formal process exists' },
-                    { value: 'informal', label: 'Informal — handled case by case' },
-                    { value: 'no', label: 'No — no process' },
-                  ]}
-                />
-              </div>
 
               <div className="flex gap-3">
                 <button onClick={() => setStep(1)} className="flex-1 bg-slate-800 hover:bg-slate-700 py-3.5 rounded-xl transition-colors flex items-center justify-center gap-1 text-sm">
@@ -441,7 +442,7 @@ export default function AssessmentPage() {
                   onClick={handleSubmit}
                   className="flex-[2] bg-brand-600 hover:bg-brand-500 disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold py-3.5 rounded-xl transition-colors flex items-center justify-center gap-2 shadow-lg shadow-brand-900/40"
                 >
-                  Get My Risk Score <ArrowRight className="w-4 h-4" />
+                  Get My Results <ArrowRight className="w-4 h-4" />
                 </button>
               </div>
             </div>
@@ -451,3 +452,4 @@ export default function AssessmentPage() {
     </div>
   )
 }
+

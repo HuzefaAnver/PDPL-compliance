@@ -1,57 +1,42 @@
-const BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+import { supabase } from '@/lib/supabase'
+const BASE = '/api'
 
 // ── Types ─────────────────────────────────────────────────────
 
 export interface AssessmentCreate {
-  // Section A
-  company_name: string
-  user_name: string
-  email: string
-  industry: string
-  // Section B
-  data_volume: string
-  data_types: string[]
-  stores_regularly: string
-  // Section C
-  knows_data_location: string
-  shares_third_party: string
-  vendor_list: string
-  privacy_policy: string
-  internal_rules: string
-  breach_plan: string
-  user_rights: string
+  [key: string]: any; // Flexibly handle all assessment fields
 }
 
 export interface AssessmentResponse {
-  id: number
+  assessment_id: string
   score: number
-  risk_level: 'RED' | 'AMBER' | 'GREEN'
+  risk_level: 'Low' | 'Moderate' | 'High'
   gaps: string[]
-  created_at: string
+  ai_summary: string
 }
 
 export interface SignupRequest {
   email: string
   password: string
-  assessment_id: number
+  assessment_id: string
 }
 
 export interface SignupResponse {
-  user_id: number
+  user_id: string
   email: string
-  assessment_id: number
+  assessment_id: string
 }
 
 export interface ResultsResponse {
-  user_id: number
+  user_id: string
   email: string
   company_name: string
   industry: string
   score: number
-  risk_level: 'RED' | 'AMBER' | 'GREEN'
+  risk_level: 'Low' | 'Moderate' | 'High'
   gaps: string[]
   ai_summary: string | null
-  assessment_id: number
+  assessment_id: string
 }
 
 // ── Fetch helper ─────────────────────────────────────────────
@@ -62,8 +47,8 @@ async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
     ...options,
   })
   if (!res.ok) {
-    const err = await res.json().catch(() => ({ detail: 'Unknown error' }))
-    throw new Error(err.detail || `API error ${res.status}`)
+    const err = await res.json().catch(() => ({ error: 'Unknown error' }))
+    throw new Error(err.error || `API error ${res.status}`)
   }
   return res.json()
 }
@@ -72,23 +57,22 @@ async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
 
 export const api = {
   submitAssessment: (data: AssessmentCreate) =>
-    apiFetch<AssessmentResponse>('/submit-assessment/', {
+    apiFetch<AssessmentResponse>('/submit-assessment', {
       method: 'POST',
       body: JSON.stringify(data),
     }),
 
   signup: (data: SignupRequest) =>
-    apiFetch<SignupResponse>('/signup/', {
+    apiFetch<SignupResponse>('/signup', {
       method: 'POST',
       body: JSON.stringify(data),
     }),
 
-  getResults: (userId: number) =>
-    apiFetch<ResultsResponse>(`/results/${userId}`),
-
-  generateSummary: (userId: number) =>
-    apiFetch<{ summary: string }>('/generate-summary', {
-      method: 'POST',
-      body: JSON.stringify({ user_id: userId }),
-    }),
+  auth: {
+    verifyOtp: (email: string, token: string, type: 'email' | 'magiclink' = 'email') =>
+      supabase.auth.verifyOtp({ email, token, type }),
+  },
+  getResults: (userId: string) =>
+    apiFetch<ResultsResponse>(`/results?userId=${userId}`),
 }
+
