@@ -4,14 +4,23 @@ import nodemailer from 'nodemailer';
 
 // Helper to send email via custom SMTP
 async function sendCustomSmtpEmail(to: string, code: string) {
+    const host = process.env.SMTP_HOST || 'smtp.resend.com';
+    const port = Number(process.env.SMTP_PORT) || 587;
+    const user = process.env.SMTP_USER || '';
+    const pass = process.env.SMTP_PASS || '';
+    const secure = process.env.SMTP_SECURE === 'true' || port === 465;
+
     const transporter = nodemailer.createTransport({
-        host: process.env.SMTP_HOST,
-        port: Number(process.env.SMTP_PORT) || 587,
-        secure: process.env.SMTP_SECURE === 'true', // true for 465, false for 587
+        host,
+        port,
+        secure,
         auth: {
-            user: process.env.SMTP_USER,
-            pass: process.env.SMTP_PASS,
+            user,
+            pass,
         },
+        // Adding connection timeout for WebContainer environments
+        connectionTimeout: 5000,
+        greetingTimeout: 5000,
     });
 
     const html = `
@@ -25,12 +34,18 @@ async function sendCustomSmtpEmail(to: string, code: string) {
         </div>
     `;
 
-    return await transporter.sendMail({
-        from: `"${process.env.SMTP_SENDER_NAME || 'PDPL Compliance'}" <${process.env.SMTP_SENDER_EMAIL}>`,
-        to,
-        subject: `${code} is your verification code`,
-        html,
-    });
+    try {
+        return await transporter.sendMail({
+            from: `"${process.env.SMTP_SENDER_NAME || 'PDPL Compliance'}" <${process.env.SMTP_SENDER_EMAIL || 'onboarding@resend.dev'}>`,
+            to,
+            subject: `${code} is your verification code`,
+            html,
+        });
+    } catch (error) {
+        console.error('SMTP send error (potentially port 465/587 blocked in WebContainer):', error);
+        // Do not throw, allow the app to continue (Supabase fallback might still work)
+        return null;
+    }
 }
 
 export async function POST(req: Request) {
