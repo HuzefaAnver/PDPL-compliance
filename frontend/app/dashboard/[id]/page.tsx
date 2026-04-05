@@ -6,12 +6,12 @@ import {
     MessageSquare, Send, ArrowLeft, ExternalLink, Activity,
     Lock, AlertCircle, Info, ChevronRight, Loader2
 } from 'lucide-react'
-import { api, Dashboard as DashboardType } from '@/lib/api'
+import { api } from '@/lib/api'
 
 export default function DashboardPage() {
     const { id } = useParams()
     const router = useRouter()
-    const [data, setData] = useState<DashboardType | null>(null)
+    const [data, setData] = useState<any | null>(null)
     const [loading, setLoading] = useState(true)
     const [chatMsg, setChatMsg] = useState('')
     const [chatLog, setChatLog] = useState<{ role: 'user' | 'bot', text: string }[]>([
@@ -21,8 +21,9 @@ export default function DashboardPage() {
     useEffect(() => {
         const fetch = async () => {
             try {
-                const d = await api.getDashboard(Number(id))
-                setData(d)
+                // const d = await api.getDashboard(Number(id))
+                // setData(d)
+                setData({}) // placeholder
             } catch (err) {
                 console.error(err)
             } finally {
@@ -39,8 +40,9 @@ export default function DashboardPage() {
         setChatMsg('')
         setChatLog(prev => [...prev, { role: 'user', text: msg }])
         try {
-            const res = await api.chat(Number(id), msg)
-            setChatLog(prev => [...prev, { role: 'bot', text: res.answer }])
+            // const res = await api.chat(Number(id), msg)
+            // setChatLog(prev => [...prev, { role: 'bot', text: res.answer }])
+            setChatLog(prev => [...prev, { role: 'bot', text: 'Chat functionality not implemented yet.' }])
         } catch (err) {
             setChatLog(prev => [...prev, { role: 'bot', text: 'Error connecting to compliance assistant.' }])
         }
