@@ -1,3 +1,4 @@
+import { Suspense } from 'react'
 import type { Metadata } from 'next'
 import { Inter, Outfit } from 'next/font/google'
 import './globals.css'
@@ -14,7 +15,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <body className={`${inter.variable} ${outfit.variable} font-sans antialiased bg-slate-950`}>
-        {children}
+        <Suspense fallback={<div className="min-h-screen bg-slate-950" />}>
+          {children}
+        </Suspense>
       </body>
     </html>
   )
