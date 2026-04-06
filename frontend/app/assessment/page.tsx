@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Shield, ArrowRight, ArrowLeft, CheckCircle, Loader2 } from 'lucide-react'
 import { api, AssessmentCreate } from '@/lib/api'
@@ -53,8 +53,8 @@ function RadioCard({ options, value, onChange }: { options: RadioOption[]; value
           type="button"
           onClick={() => onChange(opt.value)}
           className={`flex items-center justify-between w-full px-4 py-3.5 rounded-xl border text-left transition-all ${value === opt.value
-              ? 'border-brand-500 bg-brand-500/10 text-white'
-              : 'border-slate-700 bg-slate-900/60 text-slate-300 hover:bg-slate-800/60'
+            ? 'border-brand-500 bg-brand-500/10 text-white'
+            : 'border-slate-700 bg-slate-900/60 text-slate-300 hover:bg-slate-800/60'
             }`}
         >
           <div>
@@ -79,13 +79,13 @@ function SectionHeader({ step, title, subtitle }: { step: string; title: string;
   )
 }
 
-// ── Main component ─────────────────────────────────────────────
-export default function AssessmentPage() {
+// ── Assessment Form Component ──────────────────────────────────
+function AssessmentForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const isDemo = searchParams.get('demo') === 'true'
 
-  const [step, setStep] = useState(0) // 0=Risk Profile, 1=Compliance Maturity, 2=Basic Info
+  const [step, setStep] = useState(0)
   const [loading, setLoading] = useState(false)
 
   const [formData, setFormData] = useState<AssessmentCreate>({
@@ -105,7 +105,6 @@ export default function AssessmentPage() {
     user_rights: '',
   })
 
-  // Load demo data
   useEffect(() => {
     if (isDemo) setFormData(DEMO_DATA)
   }, [isDemo])
@@ -121,7 +120,6 @@ export default function AssessmentPage() {
     }))
   }
 
-  // Validation per step
   const canProceedRisk = formData.data_volume && formData.data_types.length > 0 && formData.stores_regularly
 
   const canProceedMaturity = formData.knows_data_location && formData.shares_third_party
@@ -136,7 +134,6 @@ export default function AssessmentPage() {
     setLoading(true)
     try {
       const result = await api.submitAssessment(formData)
-      // Store assessment ID in session for signup gate
       sessionStorage.setItem('assessment_id', result.assessment_id)
       sessionStorage.setItem('assessment_email', formData.email)
       router.push('/signup')
@@ -165,7 +162,6 @@ export default function AssessmentPage() {
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
-      {/* Top bar */}
       <div className="sticky top-0 z-10 bg-slate-950/90 backdrop-blur-sm border-b border-slate-800/60 px-6 py-4">
         <div className="max-w-xl mx-auto">
           <div className="flex items-center justify-between mb-3">
@@ -177,7 +173,6 @@ export default function AssessmentPage() {
             </div>
             <span className="text-xs text-slate-500">Step {step + 1} of {TOTAL_STEPS}</span>
           </div>
-          {/* Progress bar */}
           <div className="h-1.5 bg-slate-800 rounded-full overflow-hidden">
             <div
               className="h-full bg-gradient-to-r from-brand-500 to-brand-400 rounded-full transition-all duration-500"
@@ -187,11 +182,8 @@ export default function AssessmentPage() {
         </div>
       </div>
 
-      {/* Form area */}
       <div className="flex-1 flex items-start justify-center p-6 pt-10">
         <div className="w-full max-w-xl">
-
-          {/* ── Step 0: Risk & Data Profile ── */}
           {step === 0 && (
             <div className="animate-in fade-in slide-in-from-bottom-4 space-y-7">
               <SectionHeader
@@ -222,8 +214,8 @@ export default function AssessmentPage() {
                       type="button"
                       onClick={() => toggleDataType(opt.id)}
                       className={`flex items-center justify-between w-full px-4 py-3.5 rounded-xl border text-left transition-all ${formData.data_types.includes(opt.id)
-                          ? 'border-brand-500 bg-brand-500/10 text-white'
-                          : 'border-slate-700 bg-slate-900/60 text-slate-300 hover:bg-slate-800/60'
+                        ? 'border-brand-500 bg-brand-500/10 text-white'
+                        : 'border-slate-700 bg-slate-900/60 text-slate-300 hover:bg-slate-800/60'
                         }`}
                     >
                       <div>
@@ -260,7 +252,6 @@ export default function AssessmentPage() {
             </div>
           )}
 
-          {/* ── Step 1: Compliance Maturity ── */}
           {step === 1 && (
             <div className="animate-in fade-in slide-in-from-bottom-4 space-y-7">
               <SectionHeader
@@ -378,7 +369,6 @@ export default function AssessmentPage() {
             </div>
           )}
 
-          {/* ── Step 2: Basic Info ── */}
           {step === 2 && (
             <div className="animate-in fade-in slide-in-from-bottom-4 space-y-5">
               <SectionHeader
@@ -453,3 +443,16 @@ export default function AssessmentPage() {
   )
 }
 
+// ── Main Layout with Suspense (Next.js 15 Requirement) ────────────────
+export default function AssessmentPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-6 text-center">
+        <Loader2 className="w-10 h-10 text-brand-500 animate-spin mb-4" />
+        <h2 className="text-xl font-bold text-white">Initializing Assessment...</h2>
+      </div>
+    }>
+      <AssessmentForm />
+    </Suspense>
+  )
+}
