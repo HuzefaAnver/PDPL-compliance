@@ -2,8 +2,49 @@ import { NextResponse } from 'next/server';
 import { supabase, supabaseAdmin } from '@/lib/supabase';
 import nodemailer from 'nodemailer';
 
-// Helper to send email via custom SMTP
+// Helper to send email via custom SMTP or HTTP fallback for WebContainers
 async function sendCustomSmtpEmail(to: string, code: string) {
+    // 1. HTTP Fallback for WebContainers (StackBlitz/Bolt)
+    // This bypasses blocked SMTP ports (587, 465)
+    if (process.env.RESEND_API_KEY) {
+        try {
+            console.log('Using Resend HTTP API for email delivery (WebContainer compatible)');
+            const response = await fetch('https://api.resend.com/emails', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${process.env.RESEND_API_KEY}`,
+                },
+                body: JSON.stringify({
+                    from: `${process.env.SMTP_SENDER_NAME || 'PDPL Compliance'} <${process.env.SMTP_SENDER_EMAIL || 'onboarding@resend.dev'}>`,
+                    to: [to],
+                    subject: `${code} is your verification code`,
+                    html: `
+                        <div style="font-family: sans-serif; padding: 20px; color: #333;">
+                            <h2>Verification Code</h2>
+                            <p>Your 6-digit verification code is:</p>
+                            <div style="font-size: 32px; font-weight: bold; letter-spacing: 5px; color: #2563eb; padding: 20px 0;">
+                                ${code}
+                            </div>
+                            <p>This code will expire in 10 minutes.</p>
+                        </div>
+                    `,
+                }),
+            });
+
+            if (response.ok) {
+                return await response.json();
+            }
+            const errorData = await response.json();
+            console.error('Resend HTTP error:', errorData);
+            // If HTTP fails, fall through to SMTP
+        } catch (error) {
+            console.error('Resend HTTP fetch error:', error);
+            // Fall through to SMTP
+        }
+    }
+
+    // 2. Standard SMTP Fallback
     const host = process.env.SMTP_HOST || 'smtp.resend.com';
     const port = Number(process.env.SMTP_PORT) || 587;
     const user = process.env.SMTP_USER || '';
