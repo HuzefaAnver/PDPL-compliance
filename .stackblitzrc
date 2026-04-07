@@ -1,7 +1,10 @@
 {
   "installCommand": "npm install",
-  "startCommand": "npm run dev",
+  "buildCommand": "npm run build",
+  "startCommand": "npm run start",
   "env": {
-    "NODE_VERSION": "20"
-  }
+    "NODE_VERSION": "20",
+    "NODE_ENV": "production"
+  },
+  "ports": [3000]
 }

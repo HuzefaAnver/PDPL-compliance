@@ -80,32 +80,62 @@ GROQ_API_KEY=your_groq_api_key
 - Reports: User-accessible through assessment ownership
 - OTPs: Admin-only (no public policies)
 
-## Deployment Steps
+## Deployment on Bolt Cloud
 
-### 1. Prepare Environment Variables
-Set all required environment variables in your deployment platform:
-- Supabase credentials
-- Groq API key
-- Resend/SMTP configuration
+### 1. Create Bolt Project
+1. Go to [bolt.new](https://bolt.new)
+2. Create a new project
+3. Upload or connect this GitHub repository
 
-### 2. Build the Project
-```bash
-npm install
-npm run build
+### 2. Set Environment Variables in Bolt Dashboard
+Navigate to **Settings → Environment Variables** and add:
+
+```
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+GROQ_API_KEY=your_groq_api_key
+GROQ_MODEL=llama-3.3-70b-versatile
+SMTP_HOST=smtp.resend.com
+SMTP_PORT=465
+SMTP_USER=resend
+SMTP_PASS=your_resend_api_key
+SMTP_SENDER_EMAIL=noreply@yourdomain.com
+SMTP_SENDER_NAME=PDPL Compliance
+SMTP_SECURE=true
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 ```
 
-### 3. Deploy Frontend
-Options:
-- **Vercel**: Recommended (native Next.js support)
-- **Netlify**: With Next.js runtime enabled
-- **Docker**: Using Node 18+ base image
-- **AWS Amplify**: GitHub integration
+### 3. Configure Bolt Deployment
+The `.stackblitzrc` file is pre-configured for Bolt Cloud:
+- **Node Version**: 20 (LTS)
+- **Install Command**: `npm install`
+- **Start Command**: `npm run dev`
 
-### 4. Verify Production
+### 4. Deploy
+1. Click **Deploy** in Bolt Cloud dashboard
+2. Bolt automatically builds and deploys
+3. Your app will be available at a public URL
+
+### 5. Post-Deployment Verification
 - Test assessment flow end-to-end
 - Verify email delivery (OTP codes)
 - Check AI report generation
 - Test database queries and RLS enforcement
+
+### Bolt Cloud Production Build
+For production deployments, Bolt Cloud will:
+1. Install dependencies: `npm install`
+2. Build frontend: `npm run build`
+3. Start Next.js server in production mode
+4. Automatically handle SSL/HTTPS
+5. Provide CDN and edge caching
+
+### Custom Domain (Optional)
+In Bolt Cloud dashboard:
+1. Navigate to **Settings → Custom Domain**
+2. Add your domain
+3. Configure DNS records as shown
+4. SSL certificate auto-provisioned
 
 ## API Endpoints
 
