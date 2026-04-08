@@ -33,10 +33,19 @@ async function sendCustomSmtpEmail(to: string, code: string) {
             });
 
             if (response.ok) {
-                return await response.json();
+                try {
+                    return await response.json();
+                } catch (parseError) {
+                    console.error('Failed to parse Resend success response:', parseError);
+                    return { success: true };
+                }
             }
-            const errorData = await response.json();
-            console.error('Resend HTTP error:', errorData);
+            try {
+                const errorData = await response.json();
+                console.error('Resend HTTP error:', errorData);
+            } catch (parseError) {
+                console.error('Failed to parse Resend error response:', parseError);
+            }
             // If HTTP fails, fall through to SMTP
         } catch (error) {
             console.error('Resend HTTP fetch error:', error);
@@ -153,11 +162,11 @@ export async function PUT(req: Request) {
             .eq('email', email)
             .eq('code', token)
             .gt('expires_at', new Date().toISOString())
-            .single();
+            .maybeSingle();
 
         let userId: string;
 
-        if (customOtp) {
+        if (customOtp && !customError) {
             console.log('Custom OTP verified!');
             // Delete the used OTP
             await supabaseAdmin.from('otps').delete().eq('id', customOtp.id);
@@ -220,7 +229,11 @@ export async function PUT(req: Request) {
         const magicToken = linkData.properties.email_otp || linkUrl.searchParams.get('token') || linkUrl.searchParams.get('code');
 
         console.log('--- DEBUG: generateLink result ---');
-        console.log('Properties:', JSON.stringify(linkData.properties, null, 2));
+        try {
+            console.log('Properties:', JSON.stringify(linkData.properties, null, 2));
+        } catch (stringifyError) {
+            console.log('Properties: [unable to stringify]', linkData.properties);
+        }
         console.log('Extracted Token:', magicToken);
         console.log('--- END DEBUG ---');
 

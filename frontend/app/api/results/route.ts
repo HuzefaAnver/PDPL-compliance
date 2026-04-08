@@ -17,27 +17,31 @@ export async function GET(req: Request) {
             .eq('user_id', userId)
             .order('created_at', { ascending: false })
             .limit(1)
-            .single();
+            .maybeSingle();
 
-        if (assessmentError) throw assessmentError;
+        if (assessmentError || !assessment) {
+            throw new Error('No assessments found for this user');
+        }
 
         // 2. Get Report linked to assessment
         const { data: report, error: reportError } = await supabaseAdmin
             .from('reports')
             .select('*')
             .eq('assessment_id', assessment.id)
-            .single();
+            .maybeSingle();
 
-        if (reportError) throw reportError;
+        if (reportError || !report) {
+            throw new Error('No report found for this assessment');
+        }
 
         // 3. Get User Profile
-        const { data: profile, error: profileError } = await supabaseAdmin
+        const { data: profile } = await supabaseAdmin
             .from('profiles')
             .select('*')
             .eq('id', userId)
-            .single();
+            .maybeSingle();
 
-        // Profile might not exist if handling_new_user trigger failed, but we can fallback
+        // Profile might not exist if trigger failed, use fallback
         const company = profile?.company_name || assessment.responses?.company_name || 'Your Company';
         const industry = profile?.industry || assessment.responses?.industry || 'Unknown Sector';
 

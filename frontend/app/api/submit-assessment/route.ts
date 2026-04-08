@@ -5,7 +5,12 @@ import { calculateRiskScore, extractKeyGaps } from '@/lib/scoring';
 
 export async function POST(req: Request) {
     try {
-        const responses = await req.json();
+        let responses
+        try {
+            responses = await req.json();
+        } catch (parseErr) {
+            return NextResponse.json({ error: 'Invalid JSON in request body' }, { status: 400 });
+        }
 
         // 1. Validation
         if (!responses || typeof responses !== 'object') {
@@ -13,8 +18,16 @@ export async function POST(req: Request) {
         }
 
         // 2. Calculate Score & Get Gaps
-        const { score, level } = calculateRiskScore(responses);
-        const gaps = extractKeyGaps(responses);
+        let score, level, gaps
+        try {
+            const scoreData = calculateRiskScore(responses);
+            score = scoreData.score;
+            level = scoreData.level;
+            gaps = extractKeyGaps(responses);
+        } catch (calcErr) {
+            console.error('Scoring calculation error:', calcErr);
+            return NextResponse.json({ error: 'Failed to calculate risk score' }, { status: 400 });
+        }
 
         // 3. Store Assessment in Supabase
         const { data: assessment, error: assessmentError } = await supabaseAdmin
@@ -25,12 +38,20 @@ export async function POST(req: Request) {
                 risk_level: level,
             })
             .select()
-            .single();
+            .maybeSingle();
 
-        if (assessmentError) throw assessmentError;
+        if (assessmentError || !assessment) {
+            throw assessmentError || new Error('Failed to create assessment');
+        }
 
         // 4. Trigger AI Report Generation
-        const aiSummary = await generateAIReport(responses);
+        let aiSummary
+        try {
+            aiSummary = await generateAIReport(responses);
+        } catch (aiErr) {
+            console.error('AI report generation error:', aiErr);
+            aiSummary = 'Report generation failed. Please try again later.';
+        }
 
         // 5. Store AI Report
         const { error: reportError } = await supabaseAdmin

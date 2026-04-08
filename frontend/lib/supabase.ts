@@ -1,14 +1,39 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co';
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder';
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-    console.warn('--- WARNING: Supabase credentials missing ---');
-    console.warn('Check your environment variables. Using placeholder values to prevent startup crash.');
+function getSupabaseClients() {
+    if (!supabaseUrl || !supabaseAnonKey) {
+        throw new Error('Missing required Supabase environment variables: NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY');
+    }
+    return {
+        supabase: createClient(supabaseUrl, supabaseAnonKey),
+        supabaseAdmin: supabaseServiceKey
+            ? createClient(supabaseUrl, supabaseServiceKey)
+            : createClient(supabaseUrl, supabaseAnonKey),
+    };
 }
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
-export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey || supabaseAnonKey);
+let cachedClients: any = null;
+
+function getClients() {
+    if (!cachedClients) {
+        cachedClients = getSupabaseClients();
+    }
+    return cachedClients;
+}
+
+export const supabase = new Proxy({}, {
+    get: (target, prop) => {
+        return getClients().supabase[prop as any];
+    }
+}) as any;
+
+export const supabaseAdmin = new Proxy({}, {
+    get: (target, prop) => {
+        return getClients().supabaseAdmin[prop as any];
+    }
+}) as any;
 

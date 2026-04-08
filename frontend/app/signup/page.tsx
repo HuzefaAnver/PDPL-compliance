@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Shield, Lock, Mail, ArrowRight, Loader2, CheckCircle, Key } from 'lucide-react'
+import { Shield, Lock, Mail, ArrowRight, Loader as Loader2, CircleCheck as CheckCircle, Key } from 'lucide-react'
 import { api } from '@/lib/api'
 import { supabase } from '@/lib/supabase'
 
@@ -38,8 +38,12 @@ export default function SignupPage() {
         body: JSON.stringify({ email }),
       })
       if (!res.ok) {
-        const data = await res.json()
-        throw new Error(data.error || 'Failed to send verification code')
+        try {
+          const data = await res.json()
+          throw new Error(data.error || 'Failed to send verification code')
+        } catch (parseErr) {
+          throw new Error('Failed to send verification code')
+        }
       }
       setStep('otp')
     } catch (err: any) {
@@ -60,7 +64,12 @@ export default function SignupPage() {
         body: JSON.stringify({ email, token: otp, assessment_id: assessmentId }),
       })
 
-      const data = await res.json()
+      let data
+      try {
+        data = await res.json()
+      } catch (parseErr) {
+        throw new Error('Invalid server response')
+      }
       if (!res.ok) throw new Error(data.error || 'Verification failed')
 
       console.log('Verification Success Response:', data)
