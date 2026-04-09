@@ -65,11 +65,8 @@ export default function DashboardPage() {
         <div className="min-h-screen bg-slate-950 text-slate-200">
             {/* Sidebar - Web view */}
             <aside className="fixed left-0 top-0 bottom-0 w-64 bg-slate-900 border-r border-slate-800 hidden lg:flex flex-col p-6">
-                <div className="flex items-center gap-3 mb-10">
-                    <div className="w-8 h-8 rounded-lg gradient-brand flex items-center justify-center">
-                        <Shield className="w-4 h-4 text-white" />
-                    </div>
-                    <span className="font-display font-bold text-lg text-white">PDPL Shield</span>
+                <div className="mb-10 flex justify-center p-2">
+                    <img src="/logo.jpeg" alt="DataLoom Logo" className="h-32 w-auto rounded-xl object-contain border border-white/10 shadow-2xl shadow-white/5" />
                 </div>
 
                 <nav className="space-y-1 flex-1">
