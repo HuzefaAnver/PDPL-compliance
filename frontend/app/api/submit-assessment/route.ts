@@ -30,7 +30,7 @@ export async function POST(req: Request) {
         if (assessmentError) throw assessmentError;
 
         // 4. Trigger AI Report Generation
-        const aiSummary = await generateAIReport(responses);
+        const aiSummary = await generateAIReport(responses, score, level);
 
         // 5. Store AI Report
         const { error: reportError } = await supabaseAdmin

@@ -90,3 +90,37 @@
 .animate-pulse-gold {
   animation: pulse-gold 2s infinite;
 }
+
+/* AI Report Responsive Overrides */
+.ai-report-container table {
+  table-layout: fixed;
+}
+
+@media (max-width: 768px) {
+  .ai-report-container table,
+  .ai-report-container tbody,
+  .ai-report-container tr,
+  .ai-report-container td {
+    display: block !important;
+    width: 100% !important;
+    padding: 12px 0 !important;
+  }
+
+  .ai-report-container tr {
+    border-bottom: 1px solid rgba(196, 162, 84, 0.1);
+    margin-bottom: 16px;
+  }
+
+  .ai-report-container td:last-child {
+    border-bottom: none;
+  }
+}
+
+.ai-report-container {
+  line-height: 1.6;
+}
+
+.ai-report-container h1, .ai-report-container h2, .ai-report-container h3 {
+  margin-top: 1.5rem;
+  margin-bottom: 1rem;
+}
