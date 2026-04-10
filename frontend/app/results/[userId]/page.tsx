@@ -73,12 +73,12 @@ export default function ResultsDashboard() {
     // --- Guardrail: Fallback Renderer ---
     const renderContent = () => {
         const hasValidAI = data.ai_summary && data.ai_summary.length > 200;
-        
+
         if (hasValidAI) {
             return (
-                <div 
+                <div
                     className="ai-report-container"
-                    dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(data.ai_summary!) }} 
+                    dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(data.ai_summary!) }}
                 />
             );
         }
@@ -91,7 +91,7 @@ export default function ResultsDashboard() {
                     <p className="text-xl font-medium text-slate-300">Executive Summary (Standard)</p>
                     <p className="text-slate-400 mt-2">Your organization has a compliance score of <span className="text-white font-bold">{data.score}/100</span>. Immediate action is recommended to align with PDPL Articles 5 and 19 regarding data transparency and breach notification.</p>
                 </div>
-                
+
                 <div style={{ backgroundColor: riskColor, padding: '12px', color: 'white', fontWeight: 'bold', fontSize: '20px', borderRadius: '4px' }}>
                     {data.risk_level.toUpperCase()} RISK POSTURE
                 </div>
@@ -148,6 +148,25 @@ export default function ResultsDashboard() {
                     </div>
                     <div className="relative z-10">
                         {renderContent()}
+
+                        {/* Static CTA Section */}
+                        <div className="mt-16 pt-12 border-t border-gold/10 text-center animate-in fade-in slide-in-from-bottom-4 duration-1000">
+                            <h3 className="text-2xl font-display text-gold uppercase tracking-[4px] mb-4">Strategic Consultation</h3>
+                            <p className="text-slate-400 max-w-2xl mx-auto mb-8 font-body">
+                                Our senior compliance experts are ready to help you navigate the complexities of PDPL.
+                                Book a 20-minute gap analysis review to accelerate your compliance roadmap.
+                            </p>
+                            <button
+                                onClick={() => window.open('https://calendly.com/dataloom', '_blank')}
+                                className="btn-gold mx-auto group"
+                            >
+                                Schedule Your Consultation
+                                <Calendar className="w-5 h-5 transition-transform group-hover:rotate-12" />
+                            </button>
+                            <p className="mt-6 text-[10px] text-gold/40 uppercase tracking-widest font-display">
+                                Priority Support • Expert Guidance • Zero Cost
+                            </p>
+                        </div>
                     </div>
                 </section>
 
