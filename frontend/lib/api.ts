@@ -56,11 +56,16 @@ async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
 // ── API calls ────────────────────────────────────────────────
 
 export const api = {
-  submitAssessment: (data: AssessmentCreate) =>
-    apiFetch<AssessmentResponse>('/submit-assessment', {
+  submitAssessment: async (data: AssessmentCreate) => {
+    const { data: { session } } = await supabase.auth.getSession()
+    return apiFetch<AssessmentResponse>('/submit-assessment', {
       method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${session?.access_token ?? ''}`,
+      },
       body: JSON.stringify(data),
-    }),
+    })
+  },
 
   signup: (data: SignupRequest) =>
     apiFetch<SignupResponse>('/signup', {

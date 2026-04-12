@@ -98,15 +98,15 @@ export default function LandingPage() {
             onClick={() => router.push('/assessment')}
             className="btn-gold group"
           >
-            Begin Diagnostic
+            Start Assessment
             <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
           </button>
-          <button
+          {/* <button
             onClick={() => router.push('/assessment?demo=true')}
             className="btn-outline-gold"
           >
             Reference Data
-          </button>
+          </button> */}
         </div>
 
         {/* Badges */}

@@ -102,114 +102,158 @@ export async function generateAIReport(assessmentData: any, score: number, level
             level === 'Moderate' ? 'rgba(212,136,10,0.15)' :
                 'rgba(46,125,50,0.15)';
 
+    const riskLabel =
+        level === 'High'
+            ? 'Significant gaps found — urgent action needed'
+            : level === 'Moderate'
+                ? 'Some gaps found — improvements required'
+                : 'Good foundation — minor improvements needed';
+
     const scoreColor = score >= 70 ? '#2E7D32' : score >= 40 ? '#D4880A' : '#C0392B';
 
-    // ─── DESIGN SYSTEM (single source of truth for the model) ───────────────────
     const designSystem = `
 DESIGN SYSTEM — apply every rule to every element, no exceptions:
 
-Page wrapper  : background:#0a0f1e; padding:32px; font-family:'Segoe UI',sans-serif; color:#e8e4d8;
-Card          : background:rgba(196,162,84,0.05); border:1px solid rgba(196,162,84,0.15); border-radius:12px; padding:24px; margin-bottom:20px;
-Section title : color:#c4a254; font-size:11px; font-weight:700; letter-spacing:2px; text-transform:uppercase; margin:0 0 16px;
-Body text     : color:#c9c4b8; font-size:14px; line-height:1.75;
-Score widget  : font-size:52px; font-weight:800; color:${scoreColor}; letter-spacing:-1px;
-Risk banner   : background:${riskBg}; border-left:4px solid ${riskColor}; border-radius:0 8px 8px 0; padding:14px 20px; color:${riskColor}; font-size:13px; font-weight:700; letter-spacing:2px; text-transform:uppercase; margin-bottom:20px;
-Gap card      : background:rgba(196,162,84,0.03); border:1px solid rgba(196,162,84,0.12); border-radius:8px; padding:16px 20px; margin-bottom:12px;
-Gap title     : color:#e8e4d8; font-size:15px; font-weight:600; margin:0 0 6px;
-Article tag   : display:inline-block; background:rgba(196,162,84,0.1); border:1px solid rgba(196,162,84,0.25); color:#c4a254; font-size:11px; font-weight:600; padding:2px 10px; border-radius:20px; margin-right:6px; margin-bottom:8px;
-Priority badge (Critical) : background:#4a0808; color:#f87171; font-size:11px; font-weight:700; padding:2px 10px; border-radius:20px; display:inline-block;
-Priority badge (High)     : background:#4a2a00; color:#fbbf24; font-size:11px; font-weight:700; padding:2px 10px; border-radius:20px; display:inline-block;
-Priority badge (Medium)   : background:#003a38; color:#34d399; font-size:11px; font-weight:700; padding:2px 10px; border-radius:20px; display:inline-block;
-Roadmap grid  : display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; margin-top:12px;
-Roadmap col   : background:rgba(196,162,84,0.04); border:1px solid rgba(196,162,84,0.12); border-radius:8px; padding:16px;
-Roadmap header: font-size:11px; font-weight:700; letter-spacing:2px; text-transform:uppercase; margin:0 0 12px; padding-bottom:10px; border-bottom:1px solid rgba(196,162,84,0.12);
-Day 30 header : color:#f87171;
-Day 60 header : color:#fbbf24;
-Day 90 header : color:#34d399;
-Roadmap item  : color:#c9c4b8; font-size:13px; line-height:1.6; margin-bottom:8px; padding-left:12px; border-left:2px solid rgba(196,162,84,0.2);
-Strengths card: border-left:3px solid #c4a254; padding-left:20px;
-Strengths text: color:#c9c4b8; font-size:14px; line-height:1.75;
+Page wrapper   : background:#0a0f1e; padding:32px; font-family:'Segoe UI',sans-serif; color:#e8e4d8; max-width:860px; margin:0 auto;
+Big Card       : background:rgba(196,162,84,0.06); border:1px solid rgba(196,162,84,0.2); border-radius:16px; padding:32px; margin-bottom:24px;
+Card Label     : font-size:11px; font-weight:700; letter-spacing:2.5px; text-transform:uppercase; color:#c4a254; margin:0 0 12px;
+Card Heading   : font-size:22px; font-weight:700; color:#e8e4d8; margin:0 0 14px; line-height:1.3;
+Body text      : color:#c9c4b8; font-size:15px; line-height:1.8;
+Outcome badge (yes)    : display:inline-block; background:rgba(46,125,50,0.2); border:1px solid #2E7D32; color:#4caf50; font-size:12px; font-weight:700; padding:4px 14px; border-radius:20px; letter-spacing:1px; text-transform:uppercase; margin-bottom:16px;
+Outcome badge (review) : display:inline-block; background:rgba(212,136,10,0.2); border:1px solid #D4880A; color:#fbbf24; font-size:12px; font-weight:700; padding:4px 14px; border-radius:20px; letter-spacing:1px; text-transform:uppercase; margin-bottom:16px;
+Score row      : display:flex; align-items:center; gap:24px; margin-bottom:20px;
+Score circle   : width:90px; height:90px; border-radius:50%; background:conic-gradient(${scoreColor} 0deg ${score * 3.6}deg, rgba(196,162,84,0.1) ${score * 3.6}deg 360deg); display:flex; align-items:center; justify-content:center; flex-shrink:0;
+Score inner    : width:70px; height:70px; border-radius:50%; background:#0a0f1e; display:flex; align-items:center; justify-content:center; flex-direction:column;
+Score number   : font-size:22px; font-weight:800; color:${scoreColor}; line-height:1;
+Score suffix   : font-size:10px; color:#c9c4b8; margin-top:2px;
+Risk pill      : display:inline-block; background:${riskBg}; border:1px solid ${riskColor}; color:${riskColor}; font-size:12px; font-weight:700; padding:4px 14px; border-radius:20px; letter-spacing:1px; text-transform:uppercase; margin-bottom:16px;
+Action list    : list-style:none; padding:0; margin:16px 0 0;
+Action item    : color:#c9c4b8; font-size:14px; line-height:1.7; padding:10px 14px; border-left:3px solid rgba(196,162,84,0.3); margin-bottom:10px; background:rgba(196,162,84,0.03); border-radius:0 6px 6px 0;
+Divider        : border:none; border-top:1px solid rgba(196,162,84,0.12); margin:0 0 24px;
+CTA card       : background:linear-gradient(135deg, rgba(196,162,84,0.1) 0%, rgba(196,162,84,0.04) 100%); border:1px solid rgba(196,162,84,0.3); border-radius:16px; padding:32px; margin-bottom:24px; text-align:center;
+CTA heading    : font-size:20px; font-weight:700; color:#e8e4d8; margin:0 0 12px;
+CTA body       : color:#c9c4b8; font-size:15px; line-height:1.7; margin:0 0 24px;
+CTA button     : display:inline-block; background:#c4a254; color:#0a0f1e; font-size:14px; font-weight:700; padding:14px 32px; border-radius:8px; text-decoration:none; letter-spacing:0.5px;
 `;
 
     const prompt = `
-${designSystem}
+\${designSystem}
 
 ### INPUT DATA
-Score       : ${score} / 100
-Risk Level  : ${level}
-Assessment  : ${JSON.stringify(assessmentData, null, 2)}
+Score       : \${score} / 100
+Risk Level  : \${level}
+Assessment  : \${JSON.stringify(assessmentData, null, 2)}
 
 ### OUTPUT REQUIREMENTS
-Return ONE self-contained HTML <div>. No markdown, no backticks, no explanation, no preamble.
-Start your output with: <div style="background:#0a0f1e;
-End your output with: </div>
-Every element MUST use inline styles matching the DESIGN SYSTEM above exactly.
+Return ONE self-contained HTML <div>. No markdown, no backticks, no explanation.
+Start with: <div style="background:#0a0f1e; padding:32px; font-family:'Segoe UI',sans-serif; max-width:860px; margin:0 auto;"
+End with: </div>
+All text must be plain English a non-technical business owner understands immediately.
+IMPORTANT: Output exactly 3 sections in this order: Box 1, Box 2, Box 3. No more, no less.
 
-### SECTIONS TO INCLUDE (in this order)
+---
 
-1. EXECUTIVE INSIGHT
-   - Outer wrapper: Card style
-   - Section title: "Executive Insight" (Section title style)
-   - Score on its own line: show "${score} / 100" using Score widget style, then on the next line show "Compliance Score" in body text
-   - Below that: 2–3 sentence summary. Reference specific PDPL articles (5, 7, 13, 19, 21) where relevant.
+### BOX 1 — DOES PDPL APPLY TO YOU?
 
-2. RISK POSTURE
-   - Use Risk banner style
-   - Text: "Risk Posture: ${level}"
+Render a card with: background:rgba(196,162,84,0.06); border:1px solid rgba(196,162,84,0.2); border-radius:16px; padding:28px; margin-bottom:24px;
 
-3. STRATEGIC COMPLIANCE GAPS
-   - Section title: "Strategic Compliance Gaps"
-   - For each gap identified in the assessment data, render a Gap card containing:
-     * Gap title (Gap title style)
-     * Article tag showing relevant PDPL article
-     * Priority badge (choose Critical / High / Medium based on severity)
-     * 1–2 sentence description of the gap
+Layout: Two columns side by side using display:flex; gap:24px; align-items:center;
 
-4. IMPLEMENTATION ROADMAP
-   - Section title: "Implementation Roadmap"
-   - Roadmap grid with 3 columns
-   - Day 30 column: immediate critical actions (Day 30 header style)
-   - Day 60 column: mid-term technical actions (Day 60 header style)
-   - Day 90 column: long-term policy & governance actions (Day 90 header style)
-   - Each action as a Roadmap item
+LEFT SIDE (flex:0 0 140px): A large visual icon block.
+- If PDPL applies: Draw an SVG shield icon (80x80) filled with rgba(46,125,50,0.15), with a checkmark inside in #4caf50. Below it center the text "APPLICABLE" in #4caf50, font-size:11px, font-weight:700, letter-spacing:2px.
+- If unclear: Draw an SVG warning triangle (80x80) filled with rgba(212,136,10,0.15), exclamation mark inside in #fbbf24. Below it center the text "REVIEW NEEDED" in #fbbf24, font-size:11px, font-weight:700, letter-spacing:2px.
 
-5. COMPLIANCE STRENGTHS
-   - Section title: "Compliance Strengths"
-   - Strengths card + Strengths text style
-   - List the positive findings from the assessment
+RIGHT SIDE: 
+- Label: "IS PDPL APPLICABLE TO YOUR BUSINESS?" in color:#c4a254; font-size:10px; font-weight:700; letter-spacing:2px; margin-bottom:8px;
+- Heading (font-size:18px; font-weight:700; color:#e8e4d8; margin:0 0 10px): Either "Yes — PDPL Applies to Your Business" or "A Quick Expert Check is Recommended"
+- Body (color:#c9c4b8; font-size:14px; line-height:1.75): 2 sentences in plain English explaining why.
 
-### FINAL REMINDER
-Output ONLY HTML. Start with <div. End with </div>.
-No backticks. No markdown. No explanation. No "Book a consultation" buttons.
-Apply EVERY inline style from the DESIGN SYSTEM exactly as specified.
+---
+
+### BOX 2 — YOUR COMPLIANCE STATUS
+
+Render a card with same card style as Box 1.
+
+TOP SECTION: display:flex; gap:28px; align-items:center; margin-bottom:24px;
+
+LEFT: A circular gauge (SVG, 130x130):
+- Outer ring: full circle stroke rgba(196,162,84,0.1) strokeWidth=12
+- Progress arc: stroke \${scoreColor} strokeWidth=12, strokeDasharray="\${score * 2.51} 251" strokeLinecap="round", transform="rotate(-90 65 65"
+- Center text: "\${score}" in font-size:28px; font-weight:800; color:\${scoreColor}
+- Below center: "/100" in font-size:11px; color:#c9c4b8
+
+RIGHT SIDE:
+- Label: "YOUR COMPLIANCE STATUS" in color:#c4a254; font-size:10px; font-weight:700; letter-spacing:2px; margin-bottom:8px;
+- Risk pill: display:inline-block; background:\${riskBg}; border:1px solid \${riskColor}; color:\${riskColor}; font-size:11px; font-weight:700; padding:3px 14px; border-radius:20px; margin-bottom:12px; — Text: "\${level.toUpperCase()} RISK"
+- Heading (font-size:17px; font-weight:700; color:#e8e4d8; margin:0 0 8px): One plain-English sentence describing what this score means.
+- Body (color:#c9c4b8; font-size:13px): "Here is what needs your attention:"
+
+BELOW TOP SECTION: 3 horizontal visual stat cards side by side using display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; margin-bottom:20px;
+Each stat card: background:rgba(196,162,84,0.04); border:1px solid rgba(196,162,84,0.12); border-radius:10px; padding:14px; text-align:center;
+- Icon (SVG, 24x24, color:#c4a254): Use relevant icons — a document icon for Data Practices, a lock icon for Security, a person icon for Customer Rights
+- Stat label: color:#c9c4b8; font-size:11px; margin:6px 0 4px: "Data Practices", "Security Setup", "Customer Rights"
+- Stat value: font-size:20px; font-weight:800; color based on score: derive a realistic sub-score for each from assessment data — show as a percentage like "60%"
+- Mini bar below: background:rgba(196,162,84,0.1); border-radius:4px; height:4px; width:100%; with inner div width equal to that percentage, background:#c4a254;
+
+BELOW STAT CARDS: Action list — 3 items.
+Each item: display:flex; align-items:flex-start; gap:12px; padding:12px 16px; background:rgba(196,162,84,0.03); border-radius:8px; margin-bottom:8px; border:1px solid rgba(196,162,84,0.1);
+- Left: A colored circle (28x28, border-radius:50%) with a number inside — #1, #2, #3. Color the circle \${riskColor} with opacity 0.2, number in \${riskColor}, font-size:13px; font-weight:700;
+- Right: Plain-English action item (color:#c9c4b8; font-size:13px; line-height:1.6). Real gap from assessment data written as something the business owner should do.
+
+---
+
+### BOX 3 — BOOK A FREE CALL CTA
+
+Render a card with: background:linear-gradient(135deg, rgba(196,162,84,0.12), rgba(196,162,84,0.04)); border:1px solid rgba(196,162,84,0.3); border-radius:16px; padding:36px; text-align:center; margin-bottom:0;
+
+- SVG calendar/phone icon centered (40x40) in #c4a254
+- Heading (font-size:20px; font-weight:700; color:#e8e4d8; margin:12px 0 10px): "Not Sure What to Do Next?"
+- Body (color:#c9c4b8; font-size:14px; line-height:1.75; max-width:480px; margin:0 auto 24px): "Speak with a certified PDPL expert — completely free. In just 30 minutes, we will walk you through exactly what applies to your business and the steps you need to take."
+- 3 trust badges side by side (display:flex; justify-content:center; gap:24px; margin-bottom:24px):
+  Each badge: display:flex; align-items:center; gap:6px; color:#c4a254; font-size:12px; font-weight:600;
+  With a small SVG checkmark icon before each. Text: "Free of Charge", "Certified Expert", "No Obligation"
+- Button (display:inline-block; background:#c4a254; color:#0a0f1e; font-size:14px; font-weight:700; padding:14px 36px; border-radius:8px; text-decoration:none; letter-spacing:0.5px; cursor:pointer;): "Book Your Free 30-Minute Call →" linking to href="#book-call"
+
+---
+
+### FINAL RULES
+Exactly 3 boxes. Nothing else. No extra sections, no extra headings outside the boxes.
+All SVG must be inline with xmlns="http://www.w3.org/2000/svg".
+All styles must be inline. Output only raw HTML starting with <div and ending with </div>.
 `;
 
     try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 20000); // 20 second timeout
+
         const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${apiKey}`,
                 'Content-Type': 'application/json',
             },
+            signal: controller.signal,
             body: JSON.stringify({
                 model,
                 messages: [
                     {
                         role: 'system',
                         content:
-                            'You are a Senior PDPL Compliance expert and expert HTML developer. ' +
-                            'Return ONLY raw HTML with inline styles — exactly as specified in the DESIGN SYSTEM. ' +
+                            'You are a compliance communication expert and skilled HTML developer. ' +
+                            'Your job is to translate complex compliance data into clear, plain-English reports for business owners. ' +
+                            'Return ONLY raw HTML with inline styles exactly as specified in the DESIGN SYSTEM. ' +
                             'NO markdown. NO backticks. NO explanation. NO preamble. ' +
-                            'NEVER simplify, skip, or alter any style property. ' +
+                            'ALL visible text must be simple, jargon-free English that any business owner can understand. ' +
                             'Output starts with <div and ends with </div> — nothing else.',
                     },
                     { role: 'user', content: prompt },
                 ],
-                temperature: 0.1,
-                max_tokens: 4000,
+                temperature: 0.2,
+                max_tokens: 3000,
                 top_p: 1,
             }),
         });
+        clearTimeout(timeoutId);
 
         if (!response.ok) {
             const errorBody = await response.text();

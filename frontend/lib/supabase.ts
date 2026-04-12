@@ -9,6 +9,15 @@ if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_A
     console.warn('Check your environment variables. Using placeholder values to prevent startup crash.');
 }
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
-export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey || supabaseAnonKey);
+const getSupabase = (url: string, key: string) => {
+    const global = globalThis as any;
+    const cacheKey = `_supabase_${url}_${key.slice(0, 10)}`;
+    if (!global[cacheKey]) {
+        global[cacheKey] = createClient(url, key);
+    }
+    return global[cacheKey];
+};
+
+export const supabase = getSupabase(supabaseUrl, supabaseAnonKey);
+export const supabaseAdmin = getSupabase(supabaseUrl, supabaseServiceKey || supabaseAnonKey);
 

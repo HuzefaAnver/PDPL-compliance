@@ -16,10 +16,15 @@ export async function POST(req: Request) {
         const { score, level } = calculateRiskScore(responses);
         const gaps = extractKeyGaps(responses);
 
+        const authHeader = req.headers.get('Authorization')
+        const token = authHeader?.replace('Bearer ', '')
+        const { data: { user } } = await supabaseAdmin.auth.getUser(token ?? '')
+
         // 3. Store Assessment in Supabase
         const { data: assessment, error: assessmentError } = await supabaseAdmin
             .from('assessments')
             .insert({
+                user_id: user?.id,
                 responses: responses,
                 risk_score: score,
                 risk_level: level,
